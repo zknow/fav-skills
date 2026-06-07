@@ -1,0 +1,34 @@
+{
+  "Claude Code": {
+    "project": ".claude/skills/",
+    "global": "~/.claude/skills/"
+  },
+  "GitHub Copilot": {
+    "project": ".github/skills/",
+    "global": "~/.copilot/skills/"
+  },
+  "Google Antigravity": {
+    "project": ".agent/skills/",
+    "global": "~/.gemini/antigravity/skills/"
+  },
+  "Cursor": {
+    "project": ".cursor/skills/",
+    "global": "~/.cursor/skills/"
+  },
+  "OpenCode": {
+    "project": ".opencode/skill/",
+    "global": "~/.config/opencode/skill/"
+  },
+  "OpenAI Codex": {
+    "project": ".codex/skills/",
+    "global": "~/.codex/skills/"
+  },
+  "Gemini CLI": {
+    "project": ".gemini/skills/",
+    "global": "~/.gemini/skills/"
+  },
+  "Windsurf": {
+    "project": ".windsurf/skills/",
+    "global": "~/.codeium/windsurf/skills/"
+  }
+}

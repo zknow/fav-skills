@@ -1,0 +1,11 @@
+{
+  "name": "fav-skills",
+  "version": "1.0.0",
+  "description": "My Favorite AI Agent Skills TUI Installer",
+  "bin": {
+    "fav-skills": "./install-skills.js"
+  },
+  "engines": {
+    "node": ">=16.0.0"
+  }
+}

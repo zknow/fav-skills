@@ -1,0 +1,17 @@
+# Dependency directories
+node_modules/
+
+# Local testing directories created by install-skills.js (Project Scope installs)
+.claude/
+.github/skills/
+.agent/
+.cursor/
+.opencode/
+.codex/
+.gemini/
+.windsurf/
+
+# Operating System Files
+Thumbs.db
+Desktop.ini
+.DS_Store
