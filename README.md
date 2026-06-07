@@ -51,7 +51,7 @@ npx github:zknow/fav-skills "D:\my-other-project"
 - **步驟二 (安裝範圍)**：
   - `專案目錄 (Project Scope)`：將技能安裝至您目前專案的相對應目錄下。
   - `使用者全域目錄 (Global Scope)`：將技能安裝至系統的使用者家目錄（Home Directory）下。
-- **步驟三 (目標工具)**：選擇您要安裝給哪一個 AI 工具（支援 `Claude Code`, `GitHub Copilot`, `Google Antigravity`, `Cursor`, `OpenCode`, `OpenAI Codex`, `Gemini CLI`, `Windsurf`，程式會自動尋找對應的目錄名）。
+- **步驟三 (目標工具)**：選擇您要安裝給哪一個 AI 工具（支援 `Claude Code`, `GitHub Copilot`, `Google Antigravity (agy)`, `Cursor`, `OpenCode`, `OpenAI Codex`, `Windsurf`，程式會自動尋找對應的目錄名）。
 - **步驟四 (自動下載)**：程式將自動解析清單，建立目錄，並下載所有檔案。
 
 ---

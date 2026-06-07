@@ -8,8 +8,8 @@
     "global": "~/.copilot/skills/"
   },
   "Google Antigravity": {
-    "project": ".agent/skills/",
-    "global": "~/.gemini/antigravity/skills/"
+    "project": ".agents/skills/",
+    "global": "~/.gemini/config/skills/"
   },
   "Cursor": {
     "project": ".cursor/skills/",
@@ -22,10 +22,6 @@
   "OpenAI Codex": {
     "project": ".codex/skills/",
     "global": "~/.codex/skills/"
-  },
-  "Gemini CLI": {
-    "project": ".gemini/skills/",
-    "global": "~/.gemini/skills/"
   },
   "Windsurf": {
     "project": ".windsurf/skills/",

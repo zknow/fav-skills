@@ -25,11 +25,10 @@ const MD_FILE = path.join(__dirname, 'favorite_skills.md');
 const defaultAgentPaths = {
   'Claude Code': { project: '.claude/skills', global: '.claude/skills' },
   'GitHub Copilot': { project: '.github/skills', global: '.copilot/skills' },
-  'Google Antigravity': { project: '.agent/skills', global: '.gemini/antigravity/skills' },
+  'Google Antigravity': { project: '.agents/skills', global: '.gemini/config/skills' },
   'Cursor': { project: '.cursor/skills', global: '.cursor/skills' },
   'OpenCode': { project: '.opencode/skill', global: '.config/opencode/skill' },
   'OpenAI Codex': { project: '.codex/skills', global: '.codex/skills' },
-  'Gemini CLI': { project: '.gemini/skills', global: '.gemini/skills' },
   'Windsurf': { project: '.windsurf/skills', global: '.codeium/windsurf/skills' }
 };
 
@@ -403,11 +402,10 @@ async function main() {
   const agentChoice = await selectOne('步驟三：選擇目標 AI Agent / 工具', [
     { name: 'Claude Code', value: 'Claude Code' },
     { name: 'GitHub Copilot', value: 'GitHub Copilot' },
-    { name: 'Google Antigravity', value: 'Google Antigravity' },
+    { name: 'Google Antigravity (agy)', value: 'Google Antigravity' },
     { name: 'Cursor', value: 'Cursor' },
     { name: 'OpenCode', value: 'OpenCode' },
     { name: 'OpenAI Codex', value: 'OpenAI Codex' },
-    { name: 'Gemini CLI', value: 'Gemini CLI' },
     { name: 'Windsurf', value: 'Windsurf' },
     { name: '自定義路徑 (Custom Path)', value: 'custom' }
   ]);

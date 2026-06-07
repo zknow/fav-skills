@@ -12,6 +12,30 @@
     "summary": "提供防範「憑感覺寫程式」的開發規範技能，最知名的是透過 grill-me 讓 AI 扮演面試官，針對開發計劃逐步提問以理清設計細節。"
   },
   {
+    "category": "Document",
+    "repoName": "Anthropic Skills",
+    "repoUrl": "https://github.com/anthropics/skills",
+    "skills": [
+      {
+        "name": "docx",
+        "url": "https://github.com/anthropics/skills/tree/main/skills/docx"
+      },
+      {
+        "name": "pptx",
+        "url": "https://github.com/anthropics/skills/tree/main/skills/pptx"
+      },
+      {
+        "name": "pdf",
+        "url": "https://github.com/anthropics/skills/tree/main/skills/pdf"
+      },
+      {
+        "name": "xlsx",
+        "url": "https://github.com/anthropics/skills/tree/main/skills/xlsx"
+      }
+    ],
+    "summary": "Anthropic 官方的 Agent 技能庫，提供強大的文件處理能力，包含 Word (docx)、PowerPoint (pptx)、PDF 處理與 Excel (xlsx) 試算表分析。"
+  },
+  {
     "category": "UI/UX",
     "repoName": "UI/UX Pro Max",
     "repoUrl": "https://github.com/nextlevelbuilder/ui-ux-pro-max-skill",
