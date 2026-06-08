@@ -2,6 +2,8 @@
 const fs = require('fs');
 const path = require('path');
 const https = require('https');
+const net = require('net');
+const tls = require('tls');
 const readline = require('readline');
 const os = require('os');
 
@@ -19,7 +21,6 @@ const colors = {
 };
 
 const JSON_FILE = path.join(__dirname, 'favorite_skills.json');
-const MD_FILE = path.join(__dirname, 'favorite_skills.md');
 
 // 預設目錄對照表 (備用降級方案)
 const defaultAgentPaths = {
@@ -43,38 +44,6 @@ try {
   console.warn(`${colors.yellow}讀取設定檔 skills_path_map.json 失敗，使用內建預設值。${colors.reset}`);
 }
 
-// 自動將 favorite_skills.json 的內容同步/生成 favorite_skills.md
-function syncMarkdown() {
-  if (!fs.existsSync(JSON_FILE)) return;
-
-  try {
-    const rawData = fs.readFileSync(JSON_FILE, 'utf-8');
-    const repos = JSON.parse(rawData);
-
-    let mdContent = `# 技能庫清單\n\n`;
-    mdContent += `| Category (分類) | Repo Name | GitHub Path | Fav Skills | 特色總結 (最受知名的 Skill 功能) |\n`;
-    mdContent += `| :--- | :--- | :--- | :--- | :--- |\n`;
-
-    for (const repo of repos) {
-      const match = repo.repoUrl.match(/github\.com\/([^/]+\/[^/]+)/);
-      const displayName = match ? match[1] : repo.repoName;
-      const pathCol = `[${displayName}](${repo.repoUrl})`;
-
-      const skillsCol = repo.skills.map(skill => {
-        return `[[\`${skill.name}\`](${skill.url})]`;
-      }).join(' ');
-
-      const categoryVal = repo.category || 'Coding';
-      mdContent += `| ${categoryVal} | **${repo.repoName}** | ${pathCol} | ${skillsCol} | ${repo.summary} |\n`;
-    }
-    
-    mdContent += `\n`;
-
-    fs.writeFileSync(MD_FILE, mdContent, 'utf-8');
-  } catch (err) {
-    console.warn(`${colors.yellow}自動同步 favorite_skills.md 失敗：${err.message}${colors.reset}`);
-  }
-}
 
 // 從 favorite_skills.json 讀取技能清單
 function parseSkills() {
@@ -149,61 +118,126 @@ function getRawUrl(githubUrl) {
   return url;
 }
 
+// 取得包含代理伺服器 (Proxy) 與超時設定的請求選項
+function getRequestOptions(targetUrl) {
+  const target = new URL(targetUrl);
+  const proxyUrl = process.env.HTTPS_PROXY || process.env.https_proxy || process.env.HTTP_PROXY || process.env.http_proxy;
+  
+  const options = {
+    protocol: target.protocol,
+    hostname: target.hostname,
+    port: target.port || (target.protocol === 'https:' ? 443 : 80),
+    path: target.pathname + target.search,
+    headers: {
+      'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64)'
+    },
+    timeout: 15000 // 15 秒超時
+  };
+  
+  if (proxyUrl) {
+    try {
+      const proxy = new URL(proxyUrl);
+      options.createConnection = (opts, oncreate) => {
+        const socket = net.connect(proxy.port || 80, proxy.hostname, () => {
+          socket.write(`CONNECT ${target.hostname}:${options.port} HTTP/1.1\r\n` +
+                       `Host: ${target.hostname}:${options.port}\r\n` +
+                       `Proxy-Connection: Keep-Alive\r\n\r\n`);
+        });
+        
+        let buffer = '';
+        const onData = (chunk) => {
+          buffer += chunk.toString();
+          if (buffer.indexOf('\r\n\r\n') !== -1) {
+            socket.removeListener('data', onData);
+            const statusLine = buffer.split('\r\n')[0];
+            if (statusLine.indexOf('200') !== -1) {
+              const tlsSocket = tls.connect({
+                socket: socket,
+                servername: target.hostname
+              }, () => {
+                oncreate(null, tlsSocket);
+              });
+              tlsSocket.on('error', oncreate);
+            } else {
+              socket.destroy();
+              oncreate(new Error(`Proxy connection failed: ${statusLine}`));
+            }
+          }
+        };
+        socket.on('data', onData);
+        socket.on('error', oncreate);
+      };
+    } catch (e) {
+      // 若 proxyUrl 解析失敗，直接使用一般連線
+    }
+  }
+  
+  return options;
+}
+
 // 零依賴的 HTTPS GET 下載函式
 function downloadFile(url, destPath) {
   return new Promise((resolve, reject) => {
-    const options = {
-      headers: {
-        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64)'
-      }
-    };
-    https.get(url, options, (res) => {
-      if (res.statusCode === 301 || res.statusCode === 302) {
-        return downloadFile(res.headers.location, destPath).then(resolve).catch(reject);
-      }
+    try {
+      const options = getRequestOptions(url);
+      const req = https.get(options, (res) => {
+        if (res.statusCode === 301 || res.statusCode === 302) {
+          return downloadFile(res.headers.location, destPath).then(resolve).catch(reject);
+        }
 
-      if (res.statusCode !== 200) {
-        return reject(new Error(`下載失敗，HTTP 狀態碼: ${res.statusCode}`));
-      }
+        if (res.statusCode !== 200) {
+          return reject(new Error(`下載失敗，HTTP 狀態碼: ${res.statusCode}`));
+        }
 
-      const fileStream = fs.createWriteStream(destPath);
-      res.pipe(fileStream);
+        const fileStream = fs.createWriteStream(destPath);
+        res.pipe(fileStream);
 
-      fileStream.on('finish', () => {
-        fileStream.close();
-        resolve();
+        fileStream.on('finish', () => {
+          fileStream.close();
+          resolve();
+        });
       });
-    }).on('error', (err) => {
+
+      req.on('error', reject);
+      req.on('timeout', () => {
+        req.destroy(new Error('請求逾時 (Connection Timeout)'));
+      });
+    } catch (err) {
       reject(err);
-    });
+    }
   });
 }
 
 // 請求 GitHub API 回傳 JSON 資料
 function fetchJson(url) {
   return new Promise((resolve, reject) => {
-    const options = {
-      headers: {
-        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36'
-      }
-    };
-    https.get(url, options, (res) => {
-      if (res.statusCode === 301 || res.statusCode === 302) {
-        return fetchJson(res.headers.location).then(resolve).catch(reject);
-      }
-      if (res.statusCode !== 200) {
-        return reject(new Error(`API 請求失敗: ${res.statusCode}`));
-      }
-      let data = '';
-      res.on('data', chunk => data += chunk);
-      res.on('end', () => {
-        try {
-          resolve(JSON.parse(data));
-        } catch (e) {
-          reject(e);
+    try {
+      const options = getRequestOptions(url);
+      const req = https.get(options, (res) => {
+        if (res.statusCode === 301 || res.statusCode === 302) {
+          return fetchJson(res.headers.location).then(resolve).catch(reject);
         }
+        if (res.statusCode !== 200) {
+          return reject(new Error(`API 請求失敗: ${res.statusCode}`));
+        }
+        let data = '';
+        res.on('data', chunk => data += chunk);
+        res.on('end', () => {
+          try {
+            resolve(JSON.parse(data));
+          } catch (e) {
+            reject(e);
+          }
+        });
       });
-    }).on('error', reject);
+
+      req.on('error', reject);
+      req.on('timeout', () => {
+        req.destroy(new Error('請求逾時 (Connection Timeout)'));
+      });
+    } catch (err) {
+      reject(err);
+    }
   });
 }
 
@@ -380,9 +414,6 @@ function askCustomPath() {
 
 // 主程式流程
 async function main() {
-  // 自動同步更新 Markdown 檔案表格，保持文檔最新狀態
-  syncMarkdown();
-
   const workspaceBase = process.argv[2] ? path.resolve(process.argv[2]) : process.cwd();
 
   // 1. 選擇技能
